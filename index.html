@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>BNP Paribas | Tranzakció jóváhagyása</title>
+    <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bnp-green: #00965e;
+            --dark: #101828;
+            --gray-light: #f9fafb;
+            --gold: linear-gradient(135deg, #d4af37 0%, #f9d976 50%, #b8860b 100%);
+            --error-red: #d32f2f;
+        }
+
+        body { 
+            margin: 0; 
+            font-family: 'Public Sans', sans-serif; 
+            background: #f2f4f7; 
+            color: var(--dark); 
+            -webkit-font-smoothing: antialiased; 
+        }
+
+        /* LOADER */
+        #loader { 
+            position: fixed; inset: 0; background: #fff; 
+            display: flex; flex-direction: column; align-items: center; 
+            justify-content: center; z-index: 9999; 
+        }
+        #loader p { margin-top: 15px; font-size: 12px; color: var(--bnp-green); font-weight: 600; }
+        .spinner { 
+            width: 40px; height: 40px; border: 3px solid #f2f4f7; 
+            border-top: 3px solid var(--bnp-green); border-radius: 50%; 
+            animation: spin 0.8s linear infinite; 
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* HEADER */
+        header { 
+            background: var(--bnp-green); padding: 15px; color: white; 
+            display: flex; justify-content: space-between; align-items: center; 
+            border-bottom: 3px solid #007a4d; 
+        }
+        .logo-bnp { font-weight: 800; font-size: 18px; letter-spacing: -0.5px; }
+        .logo-bnp span { font-weight: 400; margin-left: 4px; }
+        .security-tag { font-size: 9px; font-weight: 700; opacity: 0.9; border: 1px solid white; padding: 2px 5px; border-radius: 3px; }
+
+        /* HERO SECTION */
+        .hero-section { 
+            background: linear-gradient(rgba(0,150,94,0.85), rgba(0,150,94,0.85)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80'); 
+            background-size: cover; background-position: center; 
+            padding: 30px 15px 70px; color: white; text-align: center; 
+        }
+        .hero-section h1 { margin: 0; font-size: 20px; }
+        .hero-section p { opacity: 0.9; font-size: 12px; margin-top: 5px; }
+
+        /* MAIN CONTENT */
+        main { 
+            max-width: 100%; margin: -50px auto 20px; 
+            padding: 0 12px; box-sizing: border-box; 
+            display: none; /* Affiché après le loader */
+        }
+
+        /* GOLD CARD */
+        .credit-card-gold { 
+            background: var(--gold); width: 100%; max-width: 400px; 
+            height: 200px; border-radius: 12px; padding: 20px; 
+            color: #433100; position: relative; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15); margin: 0 auto 20px; 
+            display: flex; flex-direction: column; justify-content: space-between; 
+            box-sizing: border-box; 
+        }
+        .card-chip { width: 40px; height: 30px; background: linear-gradient(135deg, #e0e0e0 0%, #8c8c8c 100%); border-radius: 4px; }
+        .card-logo-text { position: absolute; top: 20px; right: 20px; font-weight: 800; font-size: 14px; opacity: 0.8; }
+        .card-number { font-size: 18px; letter-spacing: 2px; font-weight: 600; }
+        .card-name { font-size: 14px; font-weight: 700; text-transform: uppercase; }
+        .card-exp { font-size: 10px; font-weight: bold; opacity: 0.8; }
+
+        /* BANKING CONTAINER */
+        .banking-container { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        .account-info { background: var(--gray-light); border-radius: 10px; padding: 15px; margin-bottom: 20px; border: 1px solid #eaecf0; text-align: center; }
+        .label-amount { font-size: 10px; font-weight: 700; color: #667085; }
+        .amount-large { font-size: 28px; font-weight: 800; color: var(--bnp-green); margin: 5px 0; }
+        .status-authorized { font-size: 10px; color: #12b76a; font-weight: 700; }
+
+        .transfer-box h3 { font-size: 16px; margin-bottom: 15px; border-left: 4px solid var(--bnp-green); padding-left: 10px; color: var(--bnp-green); }
+        .input-group { margin-bottom: 12px; }
+        .input-group label { display: block; font-size: 11px; font-weight: 600; margin-bottom: 4px; color: #667085; }
+        .input-group input { 
+            width: 100%; padding: 10px; border: 1px solid #d0d5dd; 
+            border-radius: 6px; font-size: 13px; box-sizing: border-box; 
+            background: #f9fafb; font-weight: 600; color: var(--dark);
+        }
+
+        .btn-main { width: 100%; background: var(--bnp-green); color: white; padding: 14px; border-radius: 6px; border: none; font-size: 15px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+
+        /* ERROR NOTICE */
+        #error-notice { display: none; }
+        .alert-box { background: #fff; border: 2px solid var(--error-red); border-radius: 12px; padding: 15px; animation: slideUp 0.4s ease; }
+        .alert-box h4 { margin-top: 0; color: var(--error-red); font-size: 15px; }
+        .alert-box p { font-size: 13px; line-height: 1.5; color: #344054; }
+        .fee-highlight { text-align: center; font-size: 22px; font-weight: 800; margin: 15px 0; color: var(--error-red); border: 1px dashed var(--error-red); padding: 10px; background: #fff; }
+        .btn-fees { width: 100%; background: var(--error-red); color: white; padding: 14px; border-radius: 6px; border: none; font-weight: 800; margin-top: 15px; cursor: pointer; }
+
+        footer { text-align: center; padding: 25px; font-size: 10px; color: #98a2b3; line-height: 1.5; }
+
+        @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+<div id="loader">
+    <div class="spinner"></div>
+    <p>BNP Paribas Hitelesítés...</p>
+</div>
+
+<header>
+    <div class="logo-bnp">BNP<span>PARIBAS</span></div>
+    <div class="security-tag">ÜGYFÉLBIZTONSÁG</div>
+</header>
+
+<div class="hero-section">
+    <h1>Üdvözöljük, VÖRÖS FERENC</h1>
+    <p>Az Ön átutalásának összefoglalója</p>
+</div>
+
+<main id="main-content">
+    <div class="credit-card-gold">
+        <div class="card-chip"></div>
+        <div class="card-logo-text">GOLD ELITE</div>
+        <div class="card-number">**** **** **** 0005</div>
+        <div class="card-footer">
+            <div class="card-name">VÖRÖS FERENC</div>
+            <div class="card-exp">ÉRVÉNYES: 08/29</div>
+        </div>
+    </div>
+
+    <div class="banking-container">
+        <div class="account-info">
+            <span class="label-amount">JÓVÁÍRANDÓ ÖSSZEG</span>
+            <div class="amount-large">200.000,00 €</div>
+            <div class="status-authorized">● Átutalás engedélyezve</div>
+        </div>
+
+        <div id="transfer-ui">
+            <div class="transfer-box">
+                <h3>Adatok ellenőrzése</h3>
+                <div class="input-group">
+                    <label>Számlatulajdonos</label>
+                    <input type="text" value="VÖRÖS FERENC" readonly>
+                </div>
+                <div class="input-group">
+                    <label>Számlaszám (IBAN)</label>
+                    <input type="text" value="HU41 1070 0275 7556 4737 5000 0005" readonly>
+                </div>
+                <div class="input-group">
+                    <label>BIC / SWIFT kód</label>
+                    <input type="text" value="CIBHHUHBXXX" readonly>
+                </div>
+                <button class="btn-main" id="sendBtn">200.000 € felszabadítása</button>
+            </div>
+        </div>
+
+        <div id="error-notice">
+            <div class="alert-box">
+                <h4>🛑 Tranzakció felfüggesztve</h4>
+                <p>
+                    A biztonsági rendszerünk észlelte a <strong>200.000,00 €</strong> értékű átutalást Magyarországra. 
+                    <br><br>
+                    A nemzetközi SEPA protokollok értelmében a tőke felszabadításához meg kell fizetnie a következő <strong>banki átutalási díjat</strong>:
+                </p>
+                <div class="fee-highlight">
+                    80.000 HUF
+                </div>
+                <button class="btn-fees">Átutalási díj befizetése (80.000 HUF)</button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer>
+    © 2026 BNP Paribas S.A. | Jogi nyilatkozat<br>
+    Az Ön munkamenetét végpontok közötti titkosítás védi.<br>
+    Azonosító: #BNP-HU-998-FERENC
+</footer>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const loader = document.getElementById('loader');
+        const main = document.getElementById('main-content');
+        const sendBtn = document.getElementById('sendBtn');
+        const transferUi = document.getElementById('transfer-ui');
+        const errorNotice = document.getElementById('error-notice');
+
+        // Simulation du temps de chargement
+        setTimeout(() => {
+            loader.style.display = 'none';
+            main.style.display = 'block';
+        }, 1200);
+
+        // Action au clic sur le bouton de déblocage
+        sendBtn.addEventListener('click', function() {
+            this.innerText = "Feldolgozás folyamatban...";
+            this.disabled = true;
+            this.style.opacity = "0.7";
+
+            setTimeout(() => {
+                // Transition vers le message d'erreur/frais
+                transferUi.style.display = "none";
+                errorNotice.style.display = "block";
+                
+                // Scroll automatique vers l'alerte
+                window.scrollTo({ 
+                    top: 200, 
+                    behavior: 'smooth' 
+                });
+            }, 1800);
+        });
+    });
+</script>
+
+</body>
+  </html>
